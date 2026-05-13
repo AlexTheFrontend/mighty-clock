@@ -131,11 +131,6 @@ export default function App() {
         />
         <Row label="Motorbike" amount={-t.motorbike} sign="−" />
         <Row
-          label={`Petrol (${t.weeks} weeks × $8)`}
-          amount={-t.petrol}
-          sign="−"
-        />
-        <Row
           label={`Registration (${t.regoCount} × $460)`}
           amount={-t.rego}
           sign="−"

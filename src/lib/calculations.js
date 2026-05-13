@@ -4,7 +4,6 @@ export const CONFIG = {
   parkingDays: [2, 3, 4],
   minutesSavedPerDay: 80,
   motorbikeCost: 4400,
-  petrolPerWeek: 8,
   registration: { amount: 460, firstDate: new Date(2026, 5, 9) },
   service: { amount: 100, firstDate: new Date(2026, 8, 1) },
   wof: { amount: 60, firstDate: new Date(2026, 11, 1) },
@@ -29,11 +28,6 @@ export function countParkingDays(start, end) {
     if (CONFIG.parkingDays.includes(d.getDay())) count++;
   }
   return count;
-}
-
-export function countWeeksElapsed(start, end) {
-  const days = Math.floor((atMidnight(end) - atMidnight(start)) / MS_PER_DAY);
-  return Math.max(0, Math.floor(days / 7));
 }
 
 export function countAnniversaries(firstDate, today) {
@@ -76,20 +70,14 @@ export function projectBreakEven(today, totals) {
   let nextService = nextAnniversary(CONFIG.service.firstDate, totals.serviceCount);
   let nextWof = nextAnniversary(CONFIG.wof.firstDate, totals.wofCount);
 
-  const start = atMidnight(CONFIG.startDate);
   const todayMid = atMidnight(today);
-  let daysSinceStart = Math.floor((todayMid - start) / MS_PER_DAY);
 
   const cursor = new Date(todayMid);
   for (let i = 1; i <= MAX_DAYS; i++) {
     cursor.setDate(cursor.getDate() + 1);
-    daysSinceStart++;
 
     if (CONFIG.parkingDays.includes(cursor.getDay())) {
       net += CONFIG.parkingRate;
-    }
-    if (daysSinceStart > 0 && daysSinceStart % 7 === 0) {
-      net -= CONFIG.petrolPerWeek;
     }
     if (sameDay(cursor, nextRego)) {
       net -= CONFIG.registration.amount;
@@ -118,9 +106,6 @@ export function computeTotals(today = new Date()) {
   const parkingDays = countParkingDays(start, today);
   const parkingSavings = parkingDays * CONFIG.parkingRate;
 
-  const weeks = countWeeksElapsed(start, today);
-  const petrol = weeks * CONFIG.petrolPerWeek;
-
   const regoCount = countAnniversaries(CONFIG.registration.firstDate, today);
   const rego = regoCount * CONFIG.registration.amount;
 
@@ -130,7 +115,7 @@ export function computeTotals(today = new Date()) {
   const wofCount = countAnniversaries(CONFIG.wof.firstDate, today);
   const wof = wofCount * CONFIG.wof.amount;
 
-  const totalCost = CONFIG.motorbikeCost + petrol + rego + service + wof;
+  const totalCost = CONFIG.motorbikeCost + rego + service + wof;
   const net = parkingSavings - totalCost;
   const timeSavedMinutes = parkingDays * CONFIG.minutesSavedPerDay;
 
@@ -141,8 +126,6 @@ export function computeTotals(today = new Date()) {
     parkingDays,
     parkingSavings,
     motorbike: CONFIG.motorbikeCost,
-    weeks,
-    petrol,
     regoCount,
     rego,
     serviceCount,
