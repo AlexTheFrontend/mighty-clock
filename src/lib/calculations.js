@@ -2,6 +2,7 @@ export const CONFIG = {
   startDate: new Date(2026, 3, 13),
   parkingRate: 16.5,
   parkingDays: [2, 3, 4],
+  minutesSavedPerDay: 80,
   motorbikeCost: 4400,
   petrolPerWeek: 8,
   registration: { amount: 460, firstDate: new Date(2026, 5, 9) },
@@ -131,6 +132,7 @@ export function computeTotals(today = new Date()) {
 
   const totalCost = CONFIG.motorbikeCost + petrol + rego + service + wof;
   const net = parkingSavings - totalCost;
+  const timeSavedMinutes = parkingDays * CONFIG.minutesSavedPerDay;
 
   const daysElapsed = Math.max(1, daysBetweenInclusive(start, today));
   const progress = Math.max(0, Math.min(1, parkingSavings / totalCost));
@@ -149,7 +151,27 @@ export function computeTotals(today = new Date()) {
     wof,
     totalCost,
     net,
+    timeSavedMinutes,
     daysElapsed,
     progress,
   };
+}
+
+export function breakdownDuration(totalMinutes) {
+  const MINUTE = 1;
+  const HOUR = 60 * MINUTE;
+  const DAY = 24 * HOUR;
+  const WEEK = 7 * DAY;
+  const MONTH = 30 * DAY;
+
+  const months = Math.floor(totalMinutes / MONTH);
+  let rem = totalMinutes - months * MONTH;
+  const weeks = Math.floor(rem / WEEK);
+  rem = rem - weeks * WEEK;
+  const days = Math.floor(rem / DAY);
+  rem = rem - days * DAY;
+  const hours = Math.floor(rem / HOUR);
+  const minutes = rem - hours * HOUR;
+
+  return { months, weeks, days, hours, minutes };
 }

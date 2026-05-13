@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import { CONFIG, computeTotals, projectBreakEven } from './lib/calculations';
+import {
+  CONFIG,
+  breakdownDuration,
+  computeTotals,
+  projectBreakEven,
+} from './lib/calculations';
 import './App.css';
 
 const nzd = new Intl.NumberFormat('en-NZ', {
@@ -19,22 +24,48 @@ const time = new Intl.DateTimeFormat('en-NZ', {
   minute: '2-digit',
 });
 
+const THEME_KEY = 'mighty-clock-theme';
+
+function getInitialTheme() {
+  if (typeof window === 'undefined') return 'light';
+  return window.localStorage.getItem(THEME_KEY) || 'light';
+}
+
 export default function App() {
   const [now, setNow] = useState(() => new Date());
+  const [theme, setTheme] = useState(getInitialTheme);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    window.localStorage.setItem(THEME_KEY, theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));
+
   const t = computeTotals(now);
   const projection = projectBreakEven(now, t);
+  const timeSaved = breakdownDuration(t.timeSavedMinutes);
   const netPositive = t.net >= 0;
   const progressPct = Math.round(t.progress * 100);
 
   return (
-    <main className="card">
-      <h1>Saved on parking in the city</h1>
+    <>
+      <button
+        type="button"
+        className="theme-toggle"
+        onClick={toggleTheme}
+        aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+        title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+      >
+        {theme === 'light' ? '🌙' : '☀️'}
+      </button>
+      <main className="card">
+        <h1>Saved on parking in the city</h1>
 
       <div className={`net ${netPositive ? 'positive' : 'negative'}`}>
         {nzd.format(t.net)}
@@ -63,6 +94,20 @@ export default function App() {
             <span className="projection-value">never — costs outpace savings</span>
           </>
         )}
+      </section>
+
+      <section className="time-saved">
+        <span className="projection-label">Time saved</span>
+        <div className="time-grid">
+          <TimeUnit value={timeSaved.months} label="months" />
+          <TimeUnit value={timeSaved.weeks} label="weeks" />
+          <TimeUnit value={timeSaved.days} label="days" />
+          <TimeUnit value={timeSaved.hours} label="hours" />
+          <TimeUnit value={timeSaved.minutes} label="minutes" />
+        </div>
+        <span className="projection-meta">
+          {t.parkingDays.toLocaleString('en-NZ')} commutes × 1 h 20 min
+        </span>
       </section>
 
       <section className="progress">
@@ -105,11 +150,21 @@ export default function App() {
         <Row label="Net" amount={t.net} sign="" isTotal />
       </section>
 
-      <footer>
-        Started {dateLong.format(CONFIG.startDate)} · Day {t.daysElapsed} ·
-        Updated {time.format(now)}
-      </footer>
-    </main>
+        <footer>
+          Started {dateLong.format(CONFIG.startDate)} · Day {t.daysElapsed} ·
+          Updated {time.format(now)}
+        </footer>
+      </main>
+    </>
+  );
+}
+
+function TimeUnit({ value, label }) {
+  return (
+    <div className="time-unit">
+      <span className="time-unit-value">{value}</span>
+      <span className="time-unit-label">{label}</span>
+    </div>
   );
 }
 
