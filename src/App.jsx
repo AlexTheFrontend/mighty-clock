@@ -125,7 +125,7 @@ export default function App() {
 
       <section className="breakdown">
         <Row
-          label={`Parking saved (${t.parkingDays} Tue/Wed/Thu days)`}
+          label={`Parking saved (${t.regularDays} Tue/Wed/Thu + ${t.bonusFridays} Fri)`}
           amount={t.parkingSavings}
           sign="+"
         />

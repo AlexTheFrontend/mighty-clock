@@ -30,6 +30,22 @@ export function countParkingDays(start, end) {
   return count;
 }
 
+// First Friday of each month — counts the once-a-month bonus parking day.
+export function isFirstFridayOfMonth(date) {
+  return date.getDay() === 5 && date.getDate() <= 7;
+}
+
+export function countBonusFridays(start, end) {
+  const s = atMidnight(start);
+  const e = atMidnight(end);
+  if (e < s) return 0;
+  let count = 0;
+  for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+    if (isFirstFridayOfMonth(d)) count++;
+  }
+  return count;
+}
+
 export function countAnniversaries(firstDate, today) {
   const first = atMidnight(firstDate);
   const now = atMidnight(today);
@@ -78,6 +94,8 @@ export function projectBreakEven(today, totals) {
 
     if (CONFIG.parkingDays.includes(cursor.getDay())) {
       net += CONFIG.parkingRate;
+    } else if (isFirstFridayOfMonth(cursor)) {
+      net += CONFIG.parkingRate;
     }
     if (sameDay(cursor, nextRego)) {
       net -= CONFIG.registration.amount;
@@ -103,7 +121,9 @@ export function projectBreakEven(today, totals) {
 export function computeTotals(today = new Date()) {
   const start = CONFIG.startDate;
 
-  const parkingDays = countParkingDays(start, today);
+  const regularDays = countParkingDays(start, today);
+  const bonusFridays = countBonusFridays(start, today);
+  const parkingDays = regularDays + bonusFridays;
   const parkingSavings = parkingDays * CONFIG.parkingRate;
 
   const regoCount = countAnniversaries(CONFIG.registration.firstDate, today);
@@ -124,6 +144,8 @@ export function computeTotals(today = new Date()) {
 
   return {
     parkingDays,
+    regularDays,
+    bonusFridays,
     parkingSavings,
     motorbike: CONFIG.motorbikeCost,
     regoCount,
